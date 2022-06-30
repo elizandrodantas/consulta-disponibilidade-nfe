@@ -15,14 +15,20 @@ function getTitles(array){
         if(i && i.includes('<th scope="col">')){
             let a = i.trim().split('<th scope="col">');
             for(let e of a){
-                e = e.split('</th>')[0]
+                if(e.indexOf('>') !== 0){
+                    e = e.split('</th>')[0]
 
-                e ? res.push(e) : false;
+                    e ? res.push(e) : false;
+                }
             }
         }
     }
 
     return res;
+}
+
+function lastCheck(data){
+    return data.split('Última Verificação:')[1].split('<br/>')[0].trim();
 }
 
 function getData(array){
@@ -59,7 +65,7 @@ function getData(array){
 
 async function invoke(){
     try{
-        let table = await request.get('https://www.nfe.fazenda.gov.br/portal/disponibilidade.aspx?versao=0.00&tipoConteudo=P2c98tUpxrI=', {
+        let data = await request.get('https://www.nfe.fazenda.gov.br/portal/disponibilidade.aspx?versao=0.00&tipoConteudo=P2c98tUpxrI=', {
             followRedirect: false,
             headers: {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -69,14 +75,19 @@ async function invoke(){
             }
         });
 
-        let only = onlyTable(table);
+        let only = onlyTable(data);
         let tr = onlyTr(only);
         let titles = getTitles(tr);
         let states = getData(tr);
+        let lastC = lastCheck(data);
+
+        // return only
+
 
         return {
             titles,
-            states
+            states,
+            lastCheck: lastC
         }
     }catch(e){
         console.log('error invoke', e.message)
